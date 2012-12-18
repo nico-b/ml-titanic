@@ -5,7 +5,6 @@ import sys
 import sklearn
 import numpy as np
 import datetime
-from sklearn.metrics import *
 from sklearn.svm import SVC
 from sklearn.preprocessing import *
 from sklearn.linear_model import LogisticRegression
