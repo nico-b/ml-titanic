@@ -36,7 +36,7 @@ def get_port_as_numeric(port):
 		'Q':2,
 	}.get(port,3)
 
-#ignore parch for the first version, check only by age	
+
 def is_child(age):
 	 return 1 if age < 8 else 0    
 	
@@ -69,7 +69,7 @@ def build_X_matrix(file, offset):
 		row_list = []        
 
 		for row in dataset:
-			#excludes the first line and also lines with no age
+			#excludes the first line (header)
 			if row[0 + offset] != "pclass":
 				pclass = row[0 + offset]
 				title = get_title_as_numeric(row[1 + offset].split(',')[1].split(' ')[1])
@@ -99,7 +99,6 @@ def build_X_matrix(file, offset):
 def compute_LR(X,y,X_test):
 	normalize(X)
     
-	#for c in np.linspace(0.001, 5, num=1000):
 	lr = LogisticRegression(C=0.1, tol=0.00000001)
 	lr.fit(X,y)
 
@@ -112,7 +111,7 @@ def compute_LR(X,y,X_test):
 	return lr.predict(X_test) 
 
 def compute_SVC(X,y,X_test):
-	#for g in np.linspace(0.001, 1, num=1000):
+
 	svc = SVC(C=2, gamma=0.016)
 	#train the model
 	svc.fit(X, y)
@@ -132,9 +131,6 @@ y_cross_validation = y_temp[799:y_temp.shape[0]]
 
 X_test = build_X_matrix('test.csv', offset=0)
 X_test = np.column_stack((np.ones((X_test.shape[0],1),np.float), X_test))
-
-
-#y_test = svc.predict(X_test)
 
 y_test = compute_LR(X,y,X_test)
 
