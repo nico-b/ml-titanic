@@ -15,9 +15,9 @@ from sklearn.linear_model import LogisticRegression
 #'Lady.', 'Dr.', 'the', 'Master.', 'Major.', 'Don.'
 def getTitleAsNumeric(name):
     return {
+		'Sir.': 0, 'Don.': 0, 'Mr.': 0,
     	'Miss.': 1, 'Mlle.': 1, 'Ms.': 1,
     	'Mme.': 2,
-    	'Sir.': 0, 'Don.': 0, 'Mr.': 0,
     	'Capt.': 3, 'Col.': 3, 'Major.': 3,
     	'Lady.': 1,
 		'Dr.' : 4, 'Master.' : 4,
