@@ -15,12 +15,10 @@ from sklearn.linear_model import LogisticRegression
 def get_title_as_numeric(name):
     return {
 		'Sir.': 0, 'Don.': 0, 'Mr.': 0,
-    	'Miss.': 1, 'Mlle.': 1, 'Ms.': 1,
+    	'Miss.': 1, 'Mlle.': 1, 'Ms.': 1, 'Lady.': 1,
     	'Mme.': 2,
-    	'Capt.': 3, 'Col.': 3, 'Major.': 3,
-    	'Lady.': 1,
+    	'Capt.': 3, 'Col.': 3, 'Major.': 3, 'Jonkheer.':3, 'Rev.' :3,
 		'Dr.' : 4, 'Master.' : 4,
-		'Rev.' : 5,
 	}.get(name, 6)
 
 def get_gender_as_numeric(gender):
@@ -31,21 +29,26 @@ def get_gender_as_numeric(gender):
 
 def get_port_as_numeric(port):
 	return {
-		'C':0,
-		'S':1,
-		'Q':2,
-	}.get(port,3)
+		'C':1,
+		'S':0,
+		'Q':0,
+	}.get(port,1)
 
 
 def is_child(age):
 	 return 1 if age < 8 else 0    
 	
-
 def has_cabin(cabin):
-	if cabin != '':
-		return 1
-	else:
-		return 0	
+	return cabin != ''
+	
+def get_cabin_as_numeric(cabin):
+	return {
+		'A':0,
+		'B':1, 'C':1, 'D':1, 'E':1, 'F':1,
+	}.get(cabin, 0)	
+	
+def has_big_sibsp(sibsp):
+	return sibsp < 3
 
 def build_y_matrix(file):
 	
@@ -87,11 +90,13 @@ def build_X_matrix(file, offset):
 			
 				price = row[7 + offset] if row[7 + offset] != '' else '0'
 				
-				cabin = has_cabin(row[8+offset])
-				sibsp = row[4+offset]
+				hascabin = has_cabin(row[8+offset])
+				sibsp = has_big_sibsp(row[4+offset])
 				parch = row[5+offset]
+				cabin = get_cabin_as_numeric(row[8+offset][0] if row[8+offset] != '' else '')
                 
-				row_list.append([pclass, gender, port, price, title, age, child])
+				#tendance a l'overfitting avec C trop bas : performe a 0.8565 avec C=1  
+				row_list.append([pclass, gender, port, price, title, age, child, parch, cabin])
 
 	csvfile.close()
 	return np.array(row_list, np.float)
@@ -99,12 +104,16 @@ def build_X_matrix(file, offset):
 def compute_LR(X,y,X_test):
 	normalize(X)
     
-	lr = LogisticRegression(C=0.1, tol=0.00000001)
+	#for c in np.linspace(0.01,1,1000):
+	lr = LogisticRegression(C=1)
+		#lr = LogisticRegression(C=c, tol=0.00000001)
 	lr.fit(X,y)
 
 	lr.transform(X)
 
 	#Calculate accuracy
+	#print lr.predict(X_cross_validation)
+		#print c
 	print "Accuracy : %.6f" % lr.score(X_cross_validation, y_cross_validation)
 
 	#Calculate results for the Test set
