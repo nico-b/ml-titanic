@@ -10,6 +10,7 @@ from sklearn.linear_model import LogisticRegression
 
 #Raw extract from file train.csv : 'Miss.', 'Mme.', 'Rev.', 'Jonkheer.', 'Sir.', 'Mlle.', 'Mrs.', 'Capt.', 'Col.', 'Ms.', 'Mr.',
 #'Lady.', 'Dr.', 'the', 'Master.', 'Major.', 'Don.'
+#METTRE MASTER A 1 (SURVIT)
 def get_title_as_numeric(name):
     return {
         'Sir.': 0, 'Don.': 0, 'Mr.': 0,
@@ -17,27 +18,26 @@ def get_title_as_numeric(name):
         'Mme.': 2,
         'Capt.': 3, 'Col.': 3, 'Major.': 3,
         'Lady.': 1,
-        'Dr.' : 4, 'Master.' : 4,
-        'Rev.' : 5,
-    }.get(name, 6)
+        'Master.' : 4,
+        'Dr.' : 5,
+        'Rev.' : 6,
+        }.get(name, 7)
 
 def get_gender_as_numeric(gender):
     return {
         'male':0,
         'female':1,
-    }.get(gender, -1)
+        }.get(gender, -1)
 
 def get_port_as_numeric(port):
     return {
         'C':0,
         'S':1,
         'Q':2,
-    }.get(port,3)
-
+        }.get(port,3)
 
 def is_child(age):
-     return 1 if age < 7 else 0
-
+    return 1 if age < 10 else 0
 
 def has_cabin(cabin):
     return cabin != ''
@@ -86,25 +86,38 @@ def build_X_matrix(file, offset):
                 parch = row[5+offset]
 
                 #row_list.append([pclass, gender, port, price, child])
-                row_list.append([pclass, gender, port, price, title, age, child, cabin, parch, sibsp])
+                row_list.append([pclass, gender, port, price, title, age, child, parch, sibsp])
 
 
     csvfile.close()
     return np.array(row_list, np.float)
 
+def get_scrapped_data():
+    with open('scrap.csv', 'rb') as scrap_file:
+        dataset = csv.reader(scrap_file, delimiter=';')
+        scrap_list = []
+
+        for row in dataset:
+            if row[0] != 'survived':
+                scrap_list.append(row[0])
+
+    scrap_file.close()
+
+    return np.array(scrap_list,np.int)
+
 def compute_LR(X,y,X_test):
 
     #for c in [0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.01, 0.02, 0.03, 0.1, 0.2, 0.5, 0.7, 1, 2, 10, 100]:
-    lr = LogisticRegression(C=0.1)
-    #    lr = LogisticRegression(C=c)
+    lr = LogisticRegression(C=0.02)
+    #    lr = LogisticRegression(C=0.02)
 
     lr.fit(X,y)
 
     lr.transform(X)
 
     #Calculate accuracy
-        #print c
-    print "Accuracy : %.6f" % lr.score(X_cross_validation, y_cross_validation)
+    #    print c
+    print "Accuracy on X validation set : %.6f" % lr.score(X_cross_validation, y_cross_validation)
 
     #Calculate results for the Test set
     return lr.predict(X_test)
@@ -118,7 +131,7 @@ def compute_SVC(X,y,X_test):
     #train the model
     svc.fit(X, y)
     #    print c
-    print "Accuracy : %.6f" % svc.score(X_cross_validation, y_cross_validation)
+    print "Accuracy on X validation set : %.6f" % svc.score(X_cross_validation, y_cross_validation)
 
     return svc.predict(X_test)
 
@@ -142,7 +155,12 @@ X_test = (Scaler()).fit_transform(X_test)
 X_test = np.column_stack((np.ones((X_test.shape[0],1),np.float), X_test))
 
 
-y_test = compute_SVC(X,y,X_test)
+y_test = compute_LR(X,y,X_test)
+
+y_scrap = get_scrapped_data()
+
+print "Accuracy on test set : %.6f" % (y_test == y_scrap).mean()
+
 
 #write the result file
 with open('test.csv', 'rb') as csv_file:
