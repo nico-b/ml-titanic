@@ -10,7 +10,6 @@ from sklearn.linear_model import LogisticRegression
 
 #Raw extract from file train.csv : 'Miss.', 'Mme.', 'Rev.', 'Jonkheer.', 'Sir.', 'Mlle.', 'Mrs.', 'Capt.', 'Col.', 'Ms.', 'Mr.',
 #'Lady.', 'Dr.', 'the', 'Master.', 'Major.', 'Don.'
-#METTRE MASTER A 1 (SURVIT)
 def get_title_as_numeric(name):
     return {
         'Sir.': 0, 'Don.': 0, 'Mr.': 0,
