@@ -92,10 +92,9 @@ def build_X_matrix(file, offset):
 
                 #row_list.append([pclass, gender, port, price, child])
 
-                # A ESSAYER (sans PRICE)
-                #row_list.append([pclass, gender, port, age, title, child, parch, sibsp])
+                row_list.append([pclass, gender, title, port, age, child, parch, sibsp])
 
-                row_list.append([pclass, gender, port, age, price, title, child, parch, sibsp])
+                #row_list.append([pclass, gender, port, age, price, title, child, parch, sibsp])
 
 
     csvfile.close()
