@@ -36,7 +36,13 @@ def get_port_as_numeric(port):
         }.get(port,3)
 
 def is_child(age):
+    if not has_age(age):
+        return 0
     return 1 if age < 10 else 0
+
+def has_age(age):
+    return 1 if age != '' else 0
+
 
 def has_cabin(cabin):
     return cabin != ''
@@ -78,14 +84,18 @@ def build_X_matrix(file, offset):
                 child = is_child(float(age))
                 port = get_port_as_numeric(row[9 + offset])
 
-                price = row[7 + offset] if row[7 + offset] != '' else '0'
+                price = row[7 + offset] if row[7 + offset] != '' else 0
 
                 cabin = has_cabin(row[8+offset])
                 sibsp = row[4+offset]
                 parch = row[5+offset]
 
                 #row_list.append([pclass, gender, port, price, child])
-                row_list.append([pclass, gender, port, price, title, age, child, parch, sibsp])
+
+                # A ESSAYER (sans PRICE)
+                #row_list.append([pclass, gender, port, age, title, child, parch, sibsp])
+
+                row_list.append([pclass, gender, port, age, price, title, child, parch, sibsp])
 
 
     csvfile.close()
@@ -104,7 +114,7 @@ def get_scrapped_data():
 
     return np.array(scrap_list,np.int)
 
-def compute_LR(X,y,X_test):
+def compute_LR(X,y,X_test,c):
 
     #for c in [0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.01, 0.02, 0.03, 0.1, 0.2, 0.5, 0.7, 1, 2, 10, 100]:
     lr = LogisticRegression(C=0.02)
@@ -123,10 +133,9 @@ def compute_LR(X,y,X_test):
 
 def compute_SVC(X,y,X_test):
 
-    #for c in [0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.01, 0.015, 0.02, 0.03, 0.1, 0.2, 0.5, 0.7, 1, 2, 10, 100,150,200]:
 
-    svc = SVC(C=100, gamma=0.02)
-    #    svc = SVC(C=100, gamma=c)
+    #svc = SVC(C=0.7, gamma=0.1)
+    svc = SVC(C=0.7, gamma=0.1)
     #train the model
     svc.fit(X, y)
     #    print c
@@ -153,12 +162,15 @@ X_test = build_X_matrix('test.csv', offset=0)
 X_test = (Scaler()).fit_transform(X_test)
 X_test = np.column_stack((np.ones((X_test.shape[0],1),np.float), X_test))
 
+#for c in [0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.01, 0.02, 0.03, 0.1, 0.2, 0.5, 0.7, 1, 2, 10, 100]:
 
-y_test = compute_LR(X,y,X_test)
+#print "Regularization factor : %.6f" % c
+
+y_test = compute_LR(X,y,X_test,0.02)
 
 y_scrap = get_scrapped_data()
 
-print "Accuracy on test set : %.6f" % (y_test == y_scrap).mean()
+print "Accuracy on test set : %.6f\n" % (y_test == y_scrap).mean()
 
 
 #write the result file
