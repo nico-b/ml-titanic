@@ -2,14 +2,11 @@
 
 import csv
 import numpy as np
-import datetime
 from sklearn.svm import SVC
 from sklearn.preprocessing import *
 from sklearn.linear_model import LogisticRegression
+import helper
 
-
-#Raw extract from file train.csv : 'Miss.', 'Mme.', 'Rev.', 'Jonkheer.', 'Sir.', 'Mlle.', 'Mrs.', 'Capt.', 'Col.', 'Ms.', 'Mr.',
-#'Lady.', 'Dr.', 'the', 'Master.', 'Major.', 'Don.'
 def get_title_as_numeric(name):
     return {
         'Sir.': 0, 'Don.': 0, 'Mr.': 0,
@@ -81,21 +78,16 @@ def build_X_matrix(file, offset):
                     #Mean for both train et test sets
                     age = '30'
 
-                child = is_child(float(age))
-                port = get_port_as_numeric(row[9 + offset])
+#                child = is_child(float(age))
+#                port = get_port_as_numeric(row[9 + offset])
 
-                price = row[7 + offset] if row[7 + offset] != '' else 0
+#                price = row[7 + offset] if row[7 + offset] != '' else 0
 
-                cabin = has_cabin(row[8+offset])
-                sibsp = row[4+offset]
-                parch = row[5+offset]
+#                cabin = has_cabin(row[8+offset])
+#                sibsp = row[4+offset]
+#                parch = row[5+offset]
 
-                #row_list.append([pclass, gender, port, price, child])
-
-                row_list.append([pclass, gender, title, port, age, child, parch, sibsp])
-
-                #row_list.append([pclass, gender, port, age, price, title, child, parch, sibsp])
-
+                row_list.append([pclass, gender, title, age])
 
     csvfile.close()
     return np.array(row_list, np.float)
@@ -113,27 +105,21 @@ def get_scrapped_data():
 
     return np.array(scrap_list,np.int)
 
-def compute_LR(X,y,X_test,c):
+def compute_LR(X,y,X_test, X_cross_validation, y_cross_validation, c):
 
-    #for c in [0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.01, 0.02, 0.03, 0.1, 0.2, 0.5, 0.7, 1, 2, 10, 100]:
-    lr = LogisticRegression(C=0.02)
-    #    lr = LogisticRegression(C=0.02)
+    lr = LogisticRegression(C=c)
 
     lr.fit(X,y)
-
     lr.transform(X)
 
     #Calculate accuracy
-    #    print c
     print "Accuracy on X validation set : %.6f" % lr.score(X_cross_validation, y_cross_validation)
 
     #Calculate results for the Test set
     return lr.predict(X_test)
 
-def compute_SVC(X,y,X_test):
+def compute_SVC(X,y,X_test, X_cross_validation, y_cross_validation):
 
-
-    #svc = SVC(C=0.7, gamma=0.1)
     svc = SVC(C=0.7, gamma=0.1)
     #train the model
     svc.fit(X, y)
@@ -142,13 +128,15 @@ def compute_SVC(X,y,X_test):
 
     return svc.predict(X_test)
 
+#deactivate feature mapping if <= 1
+map_feature_degree = 3
 
 X_temp = build_X_matrix('train.csv', offset=1)
+X_temp = helper.add_polynomial_features(X_temp, map_feature_degree)
 X_temp = (Scaler()).fit_transform(X_temp)
-
 X_temp = np.column_stack((np.ones((X_temp.shape[0],1),np.float), X_temp))
 
-train_set_size = 749
+train_set_size = 799
 
 X = X_temp[0:train_set_size,0::]
 X_cross_validation = X_temp[train_set_size:X_temp.shape[0],0::]
@@ -158,36 +146,17 @@ y = y_temp[0:train_set_size]
 y_cross_validation = y_temp[train_set_size:y_temp.shape[0]]
 
 X_test = build_X_matrix('test.csv', offset=0)
+X_test = helper.add_polynomial_features(X_test, map_feature_degree)
 X_test = (Scaler()).fit_transform(X_test)
 X_test = np.column_stack((np.ones((X_test.shape[0],1),np.float), X_test))
 
-#for c in [0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.01, 0.02, 0.03, 0.1, 0.2, 0.5, 0.7, 1, 2, 10, 100]:
-
-#print "Regularization factor : %.6f" % c
-
-y_test = compute_LR(X,y,X_test,0.02)
+#for c in [0.001, 0.002, 0.003, 0.004, 0.005, 0.006, 0.01, 0.02, 0.03, 0.1, 0.2, 0.5, 0.7, 1, 2, 10, 100, 200, 500, 1000, 10000]:
+#    print c
+y_test = compute_LR(X,y,X_test,X_cross_validation, y_cross_validation, 10000)
 
 y_scrap = get_scrapped_data()
 
-print "Accuracy on test set : %.6f\n" % (y_test == y_scrap).mean()
-
+helper.calculate_accuracy(y_test,y_scrap)
 
 #write the result file
-with open('test.csv', 'rb') as csv_file:
-
-    output_file = open("result/submit_nba-" +  datetime.datetime.now().strftime('%d-%m-%Y')  + ".csv", "w")
-
-    for i, line in enumerate(csv.reader(csv_file, delimiter=','), 1):
-        #skipping header
-        if i >= 2:
-            line.insert(0,str(int(y_test[i-2])))
-            #Use double quotes to avoid incorrect columns number (due to , in names)
-            line = [l.replace('\"','') for l in line]
-            line = ['"' + l + '"' for l in line]
-        else:
-            #add the header for the survived column
-            line.insert(0,'survived')
-
-        output_file.write(",".join(line) + "\n")
-
-    output_file.close()
+helper.write_output_file(y_test)
