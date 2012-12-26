@@ -92,19 +92,6 @@ def build_X_matrix(file, offset):
     csvfile.close()
     return np.array(row_list, np.float)
 
-def get_scrapped_data():
-    with open('scrap.csv', 'rb') as scrap_file:
-        dataset = csv.reader(scrap_file, delimiter=';')
-        scrap_list = []
-
-        for row in dataset:
-            if row[0] != 'survived':
-                scrap_list.append(row[0])
-
-    scrap_file.close()
-
-    return np.array(scrap_list,np.int)
-
 def compute_LR(X,y,X_test, X_cross_validation, y_cross_validation, c):
 
     lr = LogisticRegression(C=c)
@@ -118,12 +105,12 @@ def compute_LR(X,y,X_test, X_cross_validation, y_cross_validation, c):
     #Calculate results for the Test set
     return lr.predict(X_test)
 
-def compute_SVC(X,y,X_test, X_cross_validation, y_cross_validation):
+def compute_SVC(X,y,X_test, X_cross_validation, y_cross_validation, c, g):
 
-    svc = SVC(C=0.7, gamma=0.1)
-    #train the model
+    svc = SVC(C=c, gamma=g)
+
     svc.fit(X, y)
-    #    print c
+
     print "Accuracy on X validation set : %.6f" % svc.score(X_cross_validation, y_cross_validation)
 
     return svc.predict(X_test)
@@ -154,7 +141,7 @@ X_test = np.column_stack((np.ones((X_test.shape[0],1),np.float), X_test))
 #    print c
 y_test = compute_LR(X,y,X_test,X_cross_validation, y_cross_validation, 10000)
 
-y_scrap = get_scrapped_data()
+y_scrap = helper.get_scrapped_data()
 
 helper.calculate_accuracy(y_test,y_scrap)
 

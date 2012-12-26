@@ -45,7 +45,6 @@ def add_polynomial_features(X, degree):
 
     return out
 
-
 #write the output result file
 def write_output_file(y_test):
     with open('test.csv', 'rb') as csv_file:
@@ -66,3 +65,16 @@ def write_output_file(y_test):
             output_file.write(",".join(line) + "\n")
 
     output_file.close()
+
+def get_scrapped_data():
+    with open('scrap.csv', 'rb') as scrap_file:
+        dataset = csv.reader(scrap_file, delimiter=';')
+        scrap_list = []
+
+        for row in dataset:
+            if row[0] != 'survived':
+                scrap_list.append(row[0])
+
+    scrap_file.close()
+
+    return np.array(scrap_list,np.int)
